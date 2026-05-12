@@ -1,0 +1,107 @@
+import { getCurrentUser, logout } from '../auth.js';
+import { api } from '../api.js';
+import { navigate } from '../router.js';
+import { toastSuccess, toastError } from '../toast.js';
+import { ROLES } from '../utils/constants.js';
+
+export function renderProfile(container) {
+  const user = getCurrentUser();
+  let loading = false;
+  let success = false;
+
+  function render() {
+    const roleBadge = user.role === ROLES.MASTER_ADMIN
+      ? 'badge-approved' : user.role === ROLES.ADMIN
+      ? 'badge-thenku' : 'badge-pending';
+
+    container.innerHTML = `
+      <div class="page-wrapper animate-fade-in-up">
+        <div class="page-header">
+          <h1>👤 My Profile</h1>
+          <p>Manage your account settings</p>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="card-strong" style="padding:32px;max-width:600px;margin-bottom:24px">
+          <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px">
+            <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-hover));display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;flex-shrink:0">
+              ${(user.displayName || '?').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h2 style="margin:0;font-size:1.4rem">${user.displayName}</h2>
+              <p style="color:var(--text-secondary);margin:4px 0">${user.email}</p>
+              <span class="badge ${roleBadge}" style="font-size:0.75rem">${user.role}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card-strong" style="padding:32px;max-width:600px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <span style="font-size:1.5rem">🔐</span>
+            <h3 style="margin:0">Change Password</h3>
+          </div>
+
+          ${success ? `
+            <div style="padding:16px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-md);color:var(--green-light);text-align:center;margin-bottom:16px">
+              ✅ Password changed successfully!
+            </div>
+          ` : ''}
+
+          <form id="change-pw-form" class="login-form" style="gap:14px">
+            <div>
+              <label class="input-label">Current Password <span class="required">*</span></label>
+              <input type="password" class="input-field" id="pw-current" placeholder="Enter current password" required minlength="6" />
+            </div>
+            <div>
+              <label class="input-label">New Password <span class="required">*</span></label>
+              <input type="password" class="input-field" id="pw-new" placeholder="Enter new password (min 6 chars)" required minlength="6" />
+            </div>
+            <div>
+              <label class="input-label">Confirm New Password <span class="required">*</span></label>
+              <input type="password" class="input-field" id="pw-confirm" placeholder="Confirm new password" required minlength="6" />
+            </div>
+            <div id="pw-error"></div>
+            <button type="submit" class="btn btn-primary btn-lg" ${loading ? 'disabled' : ''}>
+              ${loading ? '<div class="spinner"></div> Changing...' : '🔑 Change Password'}
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('change-pw-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const current = document.getElementById('pw-current').value;
+      const newPw = document.getElementById('pw-new').value;
+      const confirm = document.getElementById('pw-confirm').value;
+
+      if (newPw !== confirm) {
+        document.getElementById('pw-error').innerHTML = `<div class="login-error">New passwords do not match</div>`;
+        return;
+      }
+      if (newPw === current) {
+        document.getElementById('pw-error').innerHTML = `<div class="login-error">New password must be different from current</div>`;
+        return;
+      }
+
+      loading = true;
+      render();
+
+      try {
+        await api.changePassword(current, newPw);
+        loading = false;
+        success = true;
+        render();
+        toastSuccess('Password changed successfully!');
+      } catch (err) {
+        loading = false;
+        success = false;
+        render();
+        document.getElementById('pw-error').innerHTML = `<div class="login-error">${err.message}</div>`;
+      }
+    });
+  }
+
+  render();
+}
