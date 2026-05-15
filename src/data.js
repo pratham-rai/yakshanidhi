@@ -54,3 +54,7 @@ export async function revertToPending(id) {
 export async function resolveMapLink(url) {
   return api.resolveMapLink(url);
 }
+
+export async function getStats() {
+  return api.getStats();
+}

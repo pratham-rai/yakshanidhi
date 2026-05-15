@@ -15,7 +15,7 @@ function isPastEvent(e) {
 // GET /api/events — approved events (public)
 router.get('/', async (req, res) => {
   try {
-    const events = await Event.find({ status: 'approved' }).sort({ date: 1 });
+    const events = await Event.find({ status: 'approved' }).sort({ date: 1, time: 1 });
     const upcomingEvents = events.filter(e => !isPastEvent(e));
     res.json(upcomingEvents.map(formatEvent));
   } catch (err) {
@@ -39,8 +39,35 @@ router.get('/all', auth, adminOnly, async (req, res) => {
   try {
     const { status } = req.query;
     const filter = status && status !== 'all' ? { status } : {};
-    const events = await Event.find(filter).sort({ date: 1 });
+    const events = await Event.find(filter).sort({ date: 1, time: 1 });
     res.json(events.map(formatEvent));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/events/stats — stats for leaderboard (master admin only)
+router.get('/stats', auth, masterAdminOnly, async (req, res) => {
+  try {
+    const actionStats = await Event.aggregate([
+      { $match: { actionedBy: { $ne: null } } },
+      { $group: {
+          _id: "$actionedBy",
+          name: { $first: "$actionedByName" },
+          approvedCount: { $sum: { $cond: [{ $eq: ["$status", "approved"] }, 1, 0] } },
+          rejectedCount: { $sum: { $cond: [{ $eq: ["$status", "rejected"] }, 1, 0] } }
+      }}
+    ]);
+
+    const submissionStats = await Event.aggregate([
+      { $group: {
+          _id: "$submittedBy",
+          name: { $first: "$submittedByName" },
+          submissionCount: { $sum: 1 }
+      }}
+    ]);
+
+    res.json({ actionStats, submissionStats });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -59,6 +59,7 @@ export const api = {
   rejectEvent: (id, reason) => request(`/events/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
   revertToPending: (id) => request(`/events/${id}/pending`, { method: 'POST' }),
   resolveMapLink: (url) => request('/events/resolve-map-link', { method: 'POST', body: JSON.stringify({ url }) }),
+  getStats: () => request('/events/stats'),
 
   // Upload
   uploadPosters: async (files) => {

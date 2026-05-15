@@ -1,4 +1,4 @@
-import { getEventsByStatus, approveEvent, rejectEvent, updateEvent, getEvents, revertToPending, resolveMapLink } from '../data.js';
+import { getEventsByStatus, approveEvent, rejectEvent, updateEvent, getEvents, revertToPending, resolveMapLink, getStats } from '../data.js';
 import { toastSuccess, toastError } from '../toast.js';
 import { formatShortDate } from '../utils/date.js';
 import { statusBadgeClass, thittuBadgeClass, EVENT_STATUS, THITTU_TYPES } from '../utils/constants.js';
@@ -9,6 +9,7 @@ export function renderAdminPanel(container) {
   let editingEvent = null;
   let events = [];
   let allEvents = [];
+  let stats = null;
   let loading = true;
 
   async function loadEvents() {
@@ -16,6 +17,9 @@ export function renderAdminPanel(container) {
     renderUI();
     try {
       allEvents = await getEvents();
+      if (isMasterAdmin()) {
+        stats = await getStats();
+      }
       events = activeTab === 'all' ? allEvents : allEvents.filter(e => e.status === activeTab);
     } catch (err) {
       console.error('Failed to load events:', err);
@@ -50,13 +54,14 @@ export function renderAdminPanel(container) {
           <button class="tab-btn ${activeTab === EVENT_STATUS.APPROVED ? 'active' : ''}" data-tab="${EVENT_STATUS.APPROVED}">Approved (${approved})</button>
           <button class="tab-btn ${activeTab === EVENT_STATUS.REJECTED ? 'active' : ''}" data-tab="${EVENT_STATUS.REJECTED}">Rejected (${rejected})</button>
           <button class="tab-btn ${activeTab === 'all' ? 'active' : ''}" data-tab="all">All (${allEvents.length})</button>
+          ${isMasterAdmin() ? `<button class="tab-btn ${activeTab === 'leaderboard' ? 'active' : ''}" data-tab="leaderboard">🏆 Leaderboard</button>` : ''}
         </div>
 
         ${loading ? `
           <div style="display:flex;flex-direction:column;gap:12px">
             ${[1,2,3].map(() => `<div class="skeleton" style="height:80px;border-radius:var(--radius-md)"></div>`).join('')}
           </div>
-        ` : events.length === 0 ? `
+        ` : activeTab === 'leaderboard' ? renderLeaderboard(stats) : events.length === 0 ? `
           <div class="empty-state"><div class="empty-icon">📋</div><h3>No ${activeTab} events</h3></div>
         ` : `
           <div style="display:flex;flex-direction:column;gap:12px">
@@ -249,4 +254,64 @@ export function renderAdminPanel(container) {
   }
 
   loadEvents();
+}
+
+function renderLeaderboard(stats) {
+  if (!stats) return '<p>Loading stats...</p>';
+  
+  // Sort stats
+  const topAdmins = [...stats.actionStats].sort((a, b) => b.approvedCount - a.approvedCount);
+  const topSubmitters = [...stats.submissionStats].sort((a, b) => b.submissionCount - a.submissionCount);
+
+  return `
+    <div class="animate-fade-in-up" style="display:flex;flex-direction:column;gap:32px;margin-top:20px">
+      <section>
+        <h2 style="margin-bottom:16px;font-size:1.4rem">🛡️ Admin Performance (Approvals/Rejections)</h2>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table style="width:100%;border-collapse:collapse">
+            <thead style="background:var(--bg-card);border-bottom:1px solid var(--border-light)">
+              <tr>
+                <th style="padding:12px;text-align:left;font-size:0.85rem;color:var(--text-muted)">Admin Name</th>
+                <th style="padding:12px;text-align:center;font-size:0.85rem;color:var(--text-muted)">Approved</th>
+                <th style="padding:12px;text-align:center;font-size:0.85rem;color:var(--text-muted)">Rejected</th>
+                <th style="padding:12px;text-align:center;font-size:0.85rem;color:var(--text-muted)">Total Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${topAdmins.map(a => `
+                <tr style="border-bottom:1px solid var(--border-light)">
+                  <td style="padding:12px;font-weight:500">${a.name || 'Anonymous'}</td>
+                  <td style="padding:12px;text-align:center;color:var(--green-light)">${a.approvedCount}</td>
+                  <td style="padding:12px;text-align:center;color:var(--red-light)">${a.rejectedCount}</td>
+                  <td style="padding:12px;text-align:center;font-weight:600">${a.approvedCount + a.rejectedCount}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 style="margin-bottom:16px;font-size:1.4rem">✍️ Contributor Leaderboard (Submissions)</h2>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table style="width:100%;border-collapse:collapse">
+            <thead style="background:var(--bg-card);border-bottom:1px solid var(--border-light)">
+              <tr>
+                <th style="padding:12px;text-align:left;font-size:0.85rem;color:var(--text-muted)">User Name</th>
+                <th style="padding:12px;text-align:center;font-size:0.85rem;color:var(--text-muted)">Submissions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${topSubmitters.map(s => `
+                <tr style="border-bottom:1px solid var(--border-light)">
+                  <td style="padding:12px;font-weight:500">${s.name || 'Anonymous'}</td>
+                  <td style="padding:12px;text-align:center;font-weight:600;color:var(--primary)">${s.submissionCount}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  `;
 }

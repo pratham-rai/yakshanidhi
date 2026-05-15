@@ -8,9 +8,11 @@ export function renderHome(container) {
   let searchQuery = '';
   let filterThittu = '';
   let filterDate = '';
+  let sortBy = 'earliest';
   let allEvents = [];
 
   async function loadEvents() {
+    // ... loadEvents logic ...
     // Show loading skeleton
     container.innerHTML = `
       <div class="page-wrapper animate-fade-in-up">
@@ -46,7 +48,13 @@ export function renderHome(container) {
 
   function getFilteredEvents() {
     let events = allEvents.filter(e => isUpcoming(e.date));
-    events.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Default sorting
+    events.sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.time}:00+05:30`);
+      const dateB = new Date(`${b.date}T${b.time}:00+05:30`);
+      return dateA - dateB;
+    });
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -60,6 +68,14 @@ export function renderHome(container) {
     if (filterDate === 'today') events = events.filter(e => isToday(e.date));
     else if (filterDate === 'week') events = events.filter(e => isThisWeek(e.date));
     else if (filterDate === 'month') events = events.filter(e => isThisMonth(e.date));
+
+    // Custom sorting
+    if (sortBy === 'latest') {
+      events.sort((a, b) => new Date(b.date) - new Date(a.date));
+    } else if (sortBy === 'prasanga') {
+      events.sort((a, b) => a.prasanga.localeCompare(b.prasanga));
+    }
+
     return events;
   }
 
@@ -106,6 +122,11 @@ export function renderHome(container) {
               <option value="today" ${filterDate === 'today' ? 'selected' : ''}>Today</option>
               <option value="week" ${filterDate === 'week' ? 'selected' : ''}>This Week</option>
               <option value="month" ${filterDate === 'month' ? 'selected' : ''}>This Month</option>
+            </select>
+            <select class="input-field" id="sort-by" style="width:auto;min-width:130px">
+              <option value="earliest" ${sortBy === 'earliest' ? 'selected' : ''}>Earliest First</option>
+              <option value="latest" ${sortBy === 'latest' ? 'selected' : ''}>Latest First</option>
+              <option value="prasanga" ${sortBy === 'prasanga' ? 'selected' : ''}>Prasanga (A-Z)</option>
             </select>
           </div>
         </div>
@@ -173,6 +194,7 @@ export function renderHome(container) {
     document.getElementById('search-input')?.addEventListener('input', (e) => { searchQuery = e.target.value; render(); });
     document.getElementById('filter-thittu')?.addEventListener('change', (e) => { filterThittu = e.target.value; render(); });
     document.getElementById('filter-date')?.addEventListener('change', (e) => { filterDate = e.target.value; render(); });
+    document.getElementById('sort-by')?.addEventListener('change', (e) => { sortBy = e.target.value; render(); });
     container.querySelectorAll('.event-card').forEach(card => {
       card.addEventListener('click', () => navigate(`/event/${card.dataset.eventId}`));
     });
