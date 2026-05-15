@@ -1,4 +1,4 @@
-import { getEventsByStatus, approveEvent, rejectEvent, updateEvent, getEvents } from '../data.js';
+import { getEventsByStatus, approveEvent, rejectEvent, updateEvent, getEvents, revertToPending } from '../data.js';
 import { toastSuccess, toastError } from '../toast.js';
 import { formatShortDate } from '../utils/date.js';
 import { statusBadgeClass, thittuBadgeClass, EVENT_STATUS, THITTU_TYPES } from '../utils/constants.js';
@@ -78,6 +78,9 @@ export function renderAdminPanel(container) {
                     <button class="btn btn-sm btn-primary approve-btn" data-id="${event.id}">✅ Approve</button>
                     <button class="btn btn-sm btn-danger reject-btn" data-id="${event.id}">❌ Reject</button>
                   ` : ''}
+                  ${event.status === EVENT_STATUS.APPROVED ? `
+                    <button class="btn btn-sm btn-danger revert-btn" data-id="${event.id}">🗑️ Revert to Pending</button>
+                  ` : ''}
                   <button class="btn btn-sm btn-secondary edit-btn" data-id="${event.id}">✏️ Edit</button>
                 </div>
               </div>`;
@@ -114,12 +117,29 @@ export function renderAdminPanel(container) {
     container.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         editingEvent = { ...allEvents.find(e => e.id === btn.dataset.id) };
+        if (!editingEvent.posterUrls) editingEvent.posterUrls = [];
         renderUI();
+      });
+    });
+
+    // Revert
+    container.querySelectorAll('.revert-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to move this event back to pending?')) return;
+        try { await revertToPending(btn.dataset.id); toastSuccess('Event moved to pending'); loadEvents(); }
+        catch (e) { toastError('Failed: ' + e.message); }
       });
     });
 
     // Modal
     if (editingEvent) {
+      container.querySelectorAll('.remove-poster-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.idx, 10);
+          editingEvent.posterUrls.splice(idx, 1);
+          renderUI();
+        });
+      });
       document.getElementById('modal-close')?.addEventListener('click', () => { editingEvent = null; renderUI(); });
       document.getElementById('modal-overlay')?.addEventListener('click', (e) => { if (e.target.id === 'modal-overlay') { editingEvent = null; renderUI(); }});
       document.getElementById('edit-form')?.addEventListener('submit', async (e) => {
@@ -132,8 +152,11 @@ export function renderAdminPanel(container) {
           time: document.getElementById('edit-time').value,
           location: document.getElementById('edit-location').value,
           description: document.getElementById('edit-description').value,
+          posterUrls: editingEvent.posterUrls || []
         };
-        try { await updateEvent(editingEvent.id, updated); toastSuccess('Event updated!'); editingEvent = null; loadEvents(); }
+        const posterFiles = document.getElementById('edit-posters').files;
+        const filesArray = posterFiles.length > 0 ? Array.from(posterFiles) : [];
+        try { await updateEvent(editingEvent.id, updated, filesArray); toastSuccess('Event updated!'); editingEvent = null; loadEvents(); }
         catch (e) { toastError('Failed: ' + e.message); }
       });
     }
@@ -159,6 +182,21 @@ export function renderAdminPanel(container) {
             </div>
             <div><label class="input-label">Location</label><input class="input-field" id="edit-location" value="${event.location}" required /></div>
             <div><label class="input-label">Description</label><textarea class="input-field" id="edit-description" rows="3">${event.description || ''}</textarea></div>
+            <div>
+              <label class="input-label">Existing Posters</label>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px">
+                 ${event.posterUrls && event.posterUrls.length ? event.posterUrls.map((url, idx) => `
+                    <div style="position:relative; width:60px; height:80px">
+                      <img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" />
+                      <button type="button" class="btn btn-sm btn-danger remove-poster-btn" data-idx="${idx}" style="position:absolute;top:-5px;right:-5px;padding:2px 5px;font-size:10px;min-width:auto;height:auto;line-height:1">✕</button>
+                    </div>
+                 `).join('') : '<p style="color:var(--text-muted);font-size:0.8rem">No posters</p>'}
+              </div>
+            </div>
+            <div>
+              <label class="input-label">Upload Additional Posters</label>
+              <input type="file" id="edit-posters" accept="image/*" multiple class="input-field" style="padding:8px" />
+            </div>
             <div class="modal-footer" style="padding:0">
               <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-close').click()">Cancel</button>
               <button type="submit" class="btn btn-primary">💾 Save Changes</button>

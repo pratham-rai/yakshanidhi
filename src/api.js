@@ -1,5 +1,5 @@
 // API client — calls the Express backend
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://yakshanidhi.onrender.com/api';
 
 function getToken() {
   return localStorage.getItem('yn_token');
@@ -44,6 +44,7 @@ export const api = {
   updateEvent: (id, data) => request(`/events/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   approveEvent: (id) => request(`/events/${id}/approve`, { method: 'POST' }),
   rejectEvent: (id, reason) => request(`/events/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  revertToPending: (id) => request(`/events/${id}/pending`, { method: 'POST' }),
 
   // Upload
   uploadPosters: async (files) => {

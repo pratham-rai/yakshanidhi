@@ -99,6 +99,19 @@ router.post('/:id/reject', auth, adminOnly, async (req, res) => {
   }
 });
 
+// POST /api/events/:id/pending — revert event to pending (admin only)
+router.post('/:id/pending', auth, adminOnly, async (req, res) => {
+  try {
+    const event = await Event.findByIdAndUpdate(req.params.id, {
+      status: 'pending', rejectionReason: ''
+    }, { new: true });
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+    res.json(formatEvent(event));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 function formatEvent(e) {
   return {
     id: e._id,

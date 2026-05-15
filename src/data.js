@@ -26,8 +26,13 @@ export async function addEvent(eventData, files = []) {
   return api.createEvent({ ...eventData, posterUrls });
 }
 
-export async function updateEvent(id, data) {
-  return api.updateEvent(id, data);
+export async function updateEvent(id, data, files = []) {
+  let updateData = { ...data };
+  if (files && files.length > 0) {
+    const posterUrls = await api.uploadPosters(files);
+    updateData.posterUrls = updateData.posterUrls ? [...updateData.posterUrls, ...posterUrls] : posterUrls;
+  }
+  return api.updateEvent(id, updateData);
 }
 
 export async function approveEvent(id) {
@@ -36,4 +41,8 @@ export async function approveEvent(id) {
 
 export async function rejectEvent(id, reason) {
   return api.rejectEvent(id, reason);
+}
+
+export async function revertToPending(id) {
+  return api.revertToPending(id);
 }
