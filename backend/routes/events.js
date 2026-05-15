@@ -53,17 +53,40 @@ router.get('/stats', auth, masterAdminOnly, async (req, res) => {
       { $match: { actionedBy: { $ne: null } } },
       { $group: {
           _id: "$actionedBy",
-          name: { $first: "$actionedByName" },
           approvedCount: { $sum: { $cond: [{ $eq: ["$status", "approved"] }, 1, 0] } },
           rejectedCount: { $sum: { $cond: [{ $eq: ["$status", "rejected"] }, 1, 0] } }
+      }},
+      { $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user"
+      }},
+      { $unwind: "$user" },
+      { $project: {
+          _id: 1,
+          approvedCount: 1,
+          rejectedCount: 1,
+          name: "$user.displayName"
       }}
     ]);
 
     const submissionStats = await Event.aggregate([
       { $group: {
           _id: "$submittedBy",
-          name: { $first: "$submittedByName" },
           submissionCount: { $sum: 1 }
+      }},
+      { $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user"
+      }},
+      { $unwind: "$user" },
+      { $project: {
+          _id: 1,
+          submissionCount: 1,
+          name: "$user.displayName"
       }}
     ]);
 
