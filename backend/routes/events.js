@@ -1,14 +1,34 @@
 const express = require('express');
 const Event = require('../models/Event');
-const { auth, optionalAuth, adminOnly } = require('../middleware/auth');
+const { auth, optionalAuth, adminOnly, masterAdminOnly } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Helper to check if event is past 12h cutoff
+function isPastEvent(e) {
+  if (!e.date || !e.time) return false;
+  const eventDate = new Date(`${e.date}T${e.time}:00+05:30`);
+  const cutoffTime = new Date(eventDate.getTime() + 12 * 60 * 60 * 1000);
+  return new Date() > cutoffTime;
+}
 
 // GET /api/events — approved events (public)
 router.get('/', async (req, res) => {
   try {
     const events = await Event.find({ status: 'approved' }).sort({ date: 1 });
-    res.json(events.map(formatEvent));
+    const upcomingEvents = events.filter(e => !isPastEvent(e));
+    res.json(upcomingEvents.map(formatEvent));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/events/past — past approved events (master admin only)
+router.get('/past', auth, masterAdminOnly, async (req, res) => {
+  try {
+    const events = await Event.find({ status: 'approved' }).sort({ date: -1 });
+    const pastEvents = events.filter(e => isPastEvent(e));
+    res.json(pastEvents.map(formatEvent));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

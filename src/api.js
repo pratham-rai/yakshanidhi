@@ -46,6 +46,7 @@ export const api = {
 
   // Events
   getApprovedEvents: () => request('/events'),
+  getPastEvents: () => request('/events/past'),
   getEventById: (id) => request(`/events/${id}`),
   getAllEvents: (status) => request(`/events/all${status ? `?status=${status}` : ''}`),
   createEvent: (data) => request('/events', { method: 'POST', body: JSON.stringify(data) }),

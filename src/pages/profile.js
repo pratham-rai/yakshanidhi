@@ -35,6 +35,20 @@ export function renderProfile(container) {
           </div>
         </div>
 
+        ${user.role === ROLES.MASTER_ADMIN ? `
+        <!-- Master Admin Tools -->
+        <div class="card-strong" style="padding:32px;max-width:600px;margin-bottom:24px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <span style="font-size:1.5rem">👑</span>
+            <h3 style="margin:0">Master Admin Tools</h3>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <a href="#/admin/past-events" class="btn btn-secondary">🗄️ Past Events Archive</a>
+            <a href="#/admin/users" class="btn btn-secondary">👥 Manage Users</a>
+          </div>
+        </div>
+        ` : ''}
+
         <!-- Change Password -->
         <div class="card-strong" style="padding:32px;max-width:600px">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">

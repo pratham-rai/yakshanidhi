@@ -5,6 +5,10 @@ export async function getApprovedEvents() {
   return api.getApprovedEvents();
 }
 
+export async function getPastEvents() {
+  return api.getPastEvents();
+}
+
 export async function getEventById(id) {
   return api.getEventById(id);
 }

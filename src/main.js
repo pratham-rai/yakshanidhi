@@ -13,6 +13,7 @@ import { renderAdminUsers } from './pages/admin-users.js';
 import { renderProfile } from './pages/profile.js';
 import { renderAbout } from './pages/about.js';
 import { renderContact } from './pages/contact.js';
+import { renderPastEvents } from './pages/past-events.js';
 
 // Build app shell
 const app = document.getElementById('app');
@@ -98,6 +99,7 @@ registerRoute('/add', pageRender((c, p) => { if (!isLoggedIn()) { navigate('/log
 registerRoute('/map', pageRender(renderMapView));
 registerRoute('/admin', pageRender((c, p) => { if (!isAdmin()) { navigate('/'); return; } return renderAdminPanel(c, p); }));
 registerRoute('/admin/users', pageRender((c, p) => { if (!isMasterAdmin()) { navigate('/'); return; } return renderAdminUsers(c, p); }));
+registerRoute('/admin/past-events', pageRender((c, p) => { if (!isMasterAdmin()) { navigate('/'); return; } return renderPastEvents(c, p); }));
 registerRoute('/profile', pageRender((c, p) => { if (!isLoggedIn()) { navigate('/login'); return; } return renderProfile(c, p); }));
 registerRoute('/about', pageRender(renderAbout));
 registerRoute('/contact', pageRender(renderContact));
