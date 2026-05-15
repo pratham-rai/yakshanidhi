@@ -112,6 +112,53 @@ router.post('/:id/pending', auth, adminOnly, async (req, res) => {
   }
 });
 
+// POST /api/events/resolve-map-link — resolve google maps link to coordinates
+router.post('/resolve-map-link', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL is required' });
+
+    const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+    const finalUrl = response.url;
+    
+    let lat = null;
+    let lng = null;
+
+    // Pattern 1: @lat,lng
+    const atMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (atMatch) {
+      lat = parseFloat(atMatch[1]);
+      lng = parseFloat(atMatch[2]);
+    } else {
+      // Pattern 2: ?q=lat,lng
+      const qMatch = finalUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (qMatch) {
+        lat = parseFloat(qMatch[1]);
+        lng = parseFloat(qMatch[2]);
+      } else {
+        // Pattern 3: Look into HTML content for meta tags or initial data
+        const html = await response.text();
+        const centerMatch = html.match(/\[-?\d+\.\d+,-?\d+\.\d+\]/g);
+        // Fallback: looking for google maps internal array structure but it's risky
+        // A safer generic regex for lat,lng in the HTML source if the URL didn't have it
+        const coordsMatch = html.match(/ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (coordsMatch) {
+          lat = parseFloat(coordsMatch[1]);
+          lng = parseFloat(coordsMatch[2]);
+        }
+      }
+    }
+
+    if (lat !== null && lng !== null) {
+      res.json({ lat, lng });
+    } else {
+      res.status(404).json({ error: 'Could not extract coordinates from the provided link' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to resolve link: ' + err.message });
+  }
+});
+
 function formatEvent(e) {
   return {
     id: e._id,

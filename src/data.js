@@ -46,3 +46,7 @@ export async function rejectEvent(id, reason) {
 export async function revertToPending(id) {
   return api.revertToPending(id);
 }
+
+export async function resolveMapLink(url) {
+  return api.resolveMapLink(url);
+}

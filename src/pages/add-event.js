@@ -1,4 +1,4 @@
-import { addEvent } from '../data.js';
+import { addEvent, resolveMapLink } from '../data.js';
 import { getCurrentUser } from '../auth.js';
 import { navigate } from '../router.js';
 import { toastSuccess, toastError } from '../toast.js';
@@ -111,6 +111,34 @@ export function renderAddEvent(container) {
     });
 
     document.getElementById('event-form').addEventListener('submit', (e) => { e.preventDefault(); handleSubmit(); });
+
+    // Map link auto-resolver
+    const mapLinkInput = document.getElementById('ef-maps-link');
+    if (mapLinkInput) {
+      mapLinkInput.addEventListener('change', async (e) => {
+        const url = e.target.value.trim();
+        if (!url) return;
+        
+        const latInput = document.getElementById('ef-lat');
+        const lngInput = document.getElementById('ef-lng');
+        
+        if (latInput.value || lngInput.value) return; // Don't override if user already typed it
+
+        try {
+          mapLinkInput.style.opacity = '0.5';
+          const coords = await resolveMapLink(url);
+          if (coords.lat && coords.lng) {
+            latInput.value = coords.lat;
+            lngInput.value = coords.lng;
+            toastSuccess('Coordinates auto-filled from Google Maps link!');
+          }
+        } catch (err) {
+          console.warn('Could not auto-resolve coordinates:', err);
+        } finally {
+          mapLinkInput.style.opacity = '1';
+        }
+      });
+    }
   }
 
   function handleFiles(fileList) {
