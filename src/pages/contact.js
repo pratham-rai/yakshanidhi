@@ -69,7 +69,14 @@ export function renderContact(container) {
                   <div style="width:44px;height:44px;border-radius:12px;background:rgba(232,117,26,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📧</div>
                   <div>
                     <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Email</div>
-                    <a href="mailto:contact@yakshanidhi.com" style="color:var(--accent-light);text-decoration:none">contact@yakshanidhi.com</a>
+                    <a href="mailto:raipratham12@gmail.com" style="color:var(--accent-light);text-decoration:none">raipratham12@gmail.com</a>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px">
+                  <div style="width:44px;height:44px;border-radius:12px;background:rgba(225,48,108,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📸</div>
+                  <div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Instagram</div>
+                    <a href="https://instagram.com/yakshanidhi" target="_blank" rel="noopener" style="color:var(--accent-light);text-decoration:none">@yakshanidhi</a>
                   </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:14px">
@@ -138,7 +145,7 @@ export function renderContact(container) {
             Accept: "application/json",
           },
           body: JSON.stringify({
-            access_key: "98c79481-d827-4c90-aa9d-7c934bf534c8", 
+            access_key: "98c79481-d827-4c90-aa9d-7c934bf534c8",
             name: name,
             email: email,
             subject: `New YakshaNidhi Inquiry: ${subjectValue}`,

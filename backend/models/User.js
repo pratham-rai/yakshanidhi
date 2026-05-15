@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
   resetCode: { type: String, default: null },
   resetCodeExpiry: { type: Date, default: null },
   reminders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
-  sentReminders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
+  sentReminders12h: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
+  sentReminders1h: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
