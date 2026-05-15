@@ -14,6 +14,7 @@ import { renderProfile } from './pages/profile.js';
 import { renderAbout } from './pages/about.js';
 import { renderContact } from './pages/contact.js';
 import { renderPastEvents } from './pages/past-events.js';
+import { renderMerchandise } from './pages/merchandise.js';
 
 // Build app shell
 const app = document.getElementById('app');
@@ -47,6 +48,7 @@ function renderNavbar() {
     <a href="#/" class="${isActive('/')}" id="nav-home">🏠 Home</a>
     <a href="#/map" class="${isActive('/map')}" id="nav-map">🗺️ Map</a>
     <a href="#/about" class="${isActive('/about')}" id="nav-about">ℹ️ About</a>
+    <a href="#/merchandise" class="${isActive('/merchandise')}" id="nav-merch">🛍️ Shop</a>
     <a href="#/contact" class="${isActive('/contact')}" id="nav-contact">📬 Contact</a>
   `;
 
@@ -102,6 +104,7 @@ registerRoute('/admin/users', pageRender((c, p) => { if (!isMasterAdmin()) { nav
 registerRoute('/admin/past-events', pageRender((c, p) => { if (!isMasterAdmin()) { navigate('/'); return; } return renderPastEvents(c, p); }));
 registerRoute('/profile', pageRender((c, p) => { if (!isLoggedIn()) { navigate('/login'); return; } return renderProfile(c, p); }));
 registerRoute('/about', pageRender(renderAbout));
+registerRoute('/merchandise', pageRender(renderMerchandise));
 registerRoute('/contact', pageRender(renderContact));
 
 // Boot

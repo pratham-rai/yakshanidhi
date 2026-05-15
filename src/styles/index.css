@@ -92,6 +92,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: contain; /* Disable pull-to-refresh */
 }
 
 ::selection {

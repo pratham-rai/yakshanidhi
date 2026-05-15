@@ -16,6 +16,8 @@ const eventSchema = new mongoose.Schema({
   rejectionReason: { type: String, default: '' },
   submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   submittedByName: { type: String, default: '' },
+  actionedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  actionedByName: { type: String, default: '' },
 }, { timestamps: true });
 
 // Index for common queries

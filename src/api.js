@@ -1,5 +1,5 @@
 // API client — calls the Express backend
-const API_BASE = window.location.hostname === 'localhost'
+const API_BASE = (window.location.hostname === 'localhost' && !window.Capacitor)
   ? 'http://localhost:5000/api'
   : 'https://yakshanidhi.onrender.com/api';
 

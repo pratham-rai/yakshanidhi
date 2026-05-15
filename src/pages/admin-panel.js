@@ -2,6 +2,7 @@ import { getEventsByStatus, approveEvent, rejectEvent, updateEvent, getEvents, r
 import { toastSuccess, toastError } from '../toast.js';
 import { formatShortDate } from '../utils/date.js';
 import { statusBadgeClass, thittuBadgeClass, EVENT_STATUS, THITTU_TYPES } from '../utils/constants.js';
+import { isMasterAdmin } from '../auth.js';
 
 export function renderAdminPanel(container) {
   let activeTab = EVENT_STATUS.PENDING;
@@ -72,6 +73,11 @@ export function renderAdminPanel(container) {
                   </div>
                   <p style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">by ${event.submittedByName || 'Unknown'} on ${subDate}</p>
                   ${event.rejectionReason ? `<p style="font-size:0.8rem;color:var(--red-light);margin-top:4px">Reason: ${event.rejectionReason}</p>` : ''}
+                  ${isMasterAdmin() && event.actionedByName ? `
+                    <p style="font-size:0.75rem;color:var(--green-light);margin-top:4px;font-weight:500;">
+                      ${event.status === EVENT_STATUS.APPROVED ? 'Approved' : 'Rejected'} by: ${event.actionedByName}
+                    </p>
+                  ` : ''}
                 </div>
                 <div class="event-actions">
                   ${event.status === EVENT_STATUS.PENDING ? `

@@ -97,7 +97,11 @@ router.patch('/:id', auth, adminOnly, async (req, res) => {
 // POST /api/events/:id/approve — approve event (admin only)
 router.post('/:id/approve', auth, adminOnly, async (req, res) => {
   try {
-    const event = await Event.findByIdAndUpdate(req.params.id, { status: 'approved' }, { new: true });
+    const event = await Event.findByIdAndUpdate(req.params.id, { 
+      status: 'approved',
+      actionedBy: req.user._id,
+      actionedByName: req.user.displayName
+    }, { new: true });
     if (!event) return res.status(404).json({ error: 'Event not found' });
     res.json(formatEvent(event));
   } catch (err) {
@@ -110,7 +114,10 @@ router.post('/:id/reject', auth, adminOnly, async (req, res) => {
   try {
     const { reason } = req.body;
     const event = await Event.findByIdAndUpdate(req.params.id, {
-      status: 'rejected', rejectionReason: reason || ''
+      status: 'rejected', 
+      rejectionReason: reason || '',
+      actionedBy: req.user._id,
+      actionedByName: req.user.displayName
     }, { new: true });
     if (!event) return res.status(404).json({ error: 'Event not found' });
     res.json(formatEvent(event));
@@ -123,7 +130,10 @@ router.post('/:id/reject', auth, adminOnly, async (req, res) => {
 router.post('/:id/pending', auth, adminOnly, async (req, res) => {
   try {
     const event = await Event.findByIdAndUpdate(req.params.id, {
-      status: 'pending', rejectionReason: ''
+      status: 'pending', 
+      rejectionReason: '',
+      actionedBy: null,
+      actionedByName: ''
     }, { new: true });
     if (!event) return res.status(404).json({ error: 'Event not found' });
     res.json(formatEvent(event));
@@ -201,6 +211,8 @@ function formatEvent(e) {
     rejectionReason: e.rejectionReason,
     submittedBy: e.submittedBy,
     submittedByName: e.submittedByName,
+    actionedBy: e.actionedBy,
+    actionedByName: e.actionedByName,
     submittedAt: e.createdAt,
     updatedAt: e.updatedAt,
   };

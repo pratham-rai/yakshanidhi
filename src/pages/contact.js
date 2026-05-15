@@ -69,7 +69,7 @@ export function renderContact(container) {
                   <div style="width:44px;height:44px;border-radius:12px;background:rgba(232,117,26,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📧</div>
                   <div>
                     <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Email</div>
-                    <a href="mailto:raipratham12@gmail.com" style="color:var(--accent-light);text-decoration:none">raipratham12@gmail.com</a>
+                    <a href="mailto:yakshanidhi.app@gmail.com" style="color:var(--accent-light);text-decoration:none">yakshanidhi.app@gmail.com</a>
                   </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:14px">

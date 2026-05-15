@@ -118,7 +118,8 @@ export function renderHome(container) {
           </div>
         ` : `
           <div class="event-grid">
-            ${events.map((event, i) => `
+            ${events.map((event, i) => {
+              const cardHtml = `
               <div class="event-card animate-fade-in-up" style="animation-delay:${i * 80}ms" data-event-id="${event.id}">
                 ${event.posterUrls && event.posterUrls.length > 0
                   ? `<img class="poster" src="${event.posterUrls[0]}" alt="${event.prasanga}" />`
@@ -135,14 +136,38 @@ export function renderHome(container) {
                     <div class="card-meta-item">📍 ${event.location}</div>
                   </div>
                 </div>
-              </div>
-            `).join('')}
+              </div>`;
+
+              // Inject a Google Ad slot after every 6 events
+              if ((i + 1) % 6 === 0) {
+                return cardHtml + `
+                  <div class="event-card ad-container" style="display:flex;align-items:center;justify-content:center;background:var(--bg-card);border:1px dashed var(--border-light);min-height:200px">
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-format="fluid"
+                         data-ad-layout-key="-fb+5w+4e-db+86"
+                         data-ad-client="ca-pub-5976380201620086"
+                         data-ad-slot="1234567890"></ins>
+                  </div>
+                `;
+              }
+              return cardHtml;
+            }).join('')}
           </div>
         `}
       </div>
 
       ${isLoggedIn() ? `<a href="#/add" class="fab" title="Add Event">+</a>` : ''}
     `;
+
+    // Push to adsbygoogle
+    setTimeout(() => {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.error('Adsense error:', e);
+      }
+    }, 500);
 
     // Listeners
     document.getElementById('search-input')?.addEventListener('input', (e) => { searchQuery = e.target.value; render(); });

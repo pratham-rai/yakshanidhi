@@ -26,7 +26,18 @@ export async function login(email, password) {
 }
 
 export async function register(email, password, displayName) {
-  const { token, user } = await api.register(email, password, displayName);
+  const data = await api.register(email, password, displayName);
+  // If backend returns a token, log them in immediately (backwards compat)
+  // But if it only returns a message (verification flow), don't set user state
+  if (data.token) {
+    localStorage.setItem('yn_token', data.token);
+    setState('user', data.user);
+  }
+  return data;
+}
+
+export async function googleLogin(idToken) {
+  const { token, user } = await api.loginWithGoogle(idToken);
   localStorage.setItem('yn_token', token);
   setState('user', user);
   return user;

@@ -1,9 +1,14 @@
-import { login, register, continueAsGuest } from '../auth.js';
+import { login, register, googleLogin, continueAsGuest, isLoggedIn } from '../auth.js';
 import { api } from '../api.js';
 import { navigate } from '../router.js';
 import { toastSuccess, toastError } from '../toast.js';
 
 export function renderLogin(container) {
+  if (isLoggedIn()) {
+    setTimeout(() => navigate('/'), 0);
+    return;
+  }
+
   let mode = 'login'; // login | register | forgot | reset | verify
   let loading = false;
   let resetEmail = '';
@@ -355,10 +360,9 @@ export function renderLogin(container) {
     loading = true;
     render();
     try {
-      const user = await api.loginWithGoogle(response.credential);
-      localStorage.setItem('yn_token', user.token);
+      await googleLogin(response.credential);
       toastSuccess('Signed in with Google!');
-      window.location.reload();
+      navigate('/');
     } catch (err) {
       loading = false;
       render();

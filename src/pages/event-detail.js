@@ -87,11 +87,31 @@ export async function renderEventDetail(container, params) {
         <div style="padding:0 32px 32px">
           <p style="color:var(--text-muted);font-size:0.8rem">Submitted by ${event.submittedByName || 'Unknown'} on ${submittedDate}</p>
         </div>
+
+        <!-- Google Ad Slot -->
+        <div style="padding: 24px 32px; border-top: 1px solid var(--border-light); background: rgba(0,0,0,0.02);">
+          <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; text-align: center;">Advertisement</div>
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-5976380201620086"
+               data-ad-slot="9876543210"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+        </div>
       </div>
     </div>
   `;
 
   document.getElementById('back-btn').addEventListener('click', () => window.history.back());
+  
+  // Push to adsbygoogle
+  setTimeout(() => {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      console.error('Adsense error:', e);
+    }
+  }, 500);
 
   const remindBtn = document.getElementById('remind-btn');
   if (remindBtn) {
