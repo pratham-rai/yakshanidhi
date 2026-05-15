@@ -124,27 +124,31 @@ router.post('/resolve-map-link', async (req, res) => {
     let lat = null;
     let lng = null;
 
-    // Pattern 1: @lat,lng
-    const atMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (atMatch) {
-      lat = parseFloat(atMatch[1]);
-      lng = parseFloat(atMatch[2]);
+    // Pattern 1: !3d and !4d (Exact Pin Marker - most accurate)
+    const pinMatch = finalUrl.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+    if (pinMatch) {
+      lat = parseFloat(pinMatch[1]);
+      lng = parseFloat(pinMatch[2]);
     } else {
-      // Pattern 2: ?q=lat,lng
-      const qMatch = finalUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
-      if (qMatch) {
-        lat = parseFloat(qMatch[1]);
-        lng = parseFloat(qMatch[2]);
+      // Pattern 2: @lat,lng (Viewport Center - less accurate but good fallback)
+      const atMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (atMatch) {
+        lat = parseFloat(atMatch[1]);
+        lng = parseFloat(atMatch[2]);
       } else {
-        // Pattern 3: Look into HTML content for meta tags or initial data
-        const html = await response.text();
-        const centerMatch = html.match(/\[-?\d+\.\d+,-?\d+\.\d+\]/g);
-        // Fallback: looking for google maps internal array structure but it's risky
-        // A safer generic regex for lat,lng in the HTML source if the URL didn't have it
-        const coordsMatch = html.match(/ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
-        if (coordsMatch) {
-          lat = parseFloat(coordsMatch[1]);
-          lng = parseFloat(coordsMatch[2]);
+        // Pattern 3: ?q=lat,lng
+        const qMatch = finalUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (qMatch) {
+          lat = parseFloat(qMatch[1]);
+          lng = parseFloat(qMatch[2]);
+        } else {
+          // Pattern 4: HTML fallback
+          const html = await response.text();
+          const coordsMatch = html.match(/ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+          if (coordsMatch) {
+            lat = parseFloat(coordsMatch[1]);
+            lng = parseFloat(coordsMatch[2]);
+          }
         }
       }
     }

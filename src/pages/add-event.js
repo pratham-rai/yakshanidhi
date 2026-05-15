@@ -115,9 +115,9 @@ export function renderAddEvent(container) {
     // Map link auto-resolver
     const mapLinkInput = document.getElementById('ef-maps-link');
     if (mapLinkInput) {
-      mapLinkInput.addEventListener('change', async (e) => {
+      mapLinkInput.addEventListener('input', async (e) => {
         const url = e.target.value.trim();
-        if (!url) return;
+        if (!url || !url.startsWith('http')) return;
         
         const latInput = document.getElementById('ef-lat');
         const lngInput = document.getElementById('ef-lng');
