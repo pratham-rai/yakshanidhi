@@ -99,7 +99,7 @@ export async function renderEventDetail(container, params) {
       try {
         await toggleReminder(event.id);
         renderEventDetail(container, params); // Re-render to update button state
-        toastSuccess(isReminded(event.id) ? 'Reminder removed' : 'Reminder set!');
+        toastSuccess(isReminded(event.id) ? 'Reminder set!' : 'Reminder removed');
       } catch (err) {
         toastError('Failed to update reminder: ' + err.message);
       }
