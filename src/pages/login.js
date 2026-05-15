@@ -4,9 +4,10 @@ import { navigate } from '../router.js';
 import { toastSuccess, toastError } from '../toast.js';
 
 export function renderLogin(container) {
-  let mode = 'login'; // login | register | forgot | reset
+  let mode = 'login'; // login | register | forgot | reset | verify
   let loading = false;
   let resetEmail = '';
+  let authEmail = ''; // Store email for verification resends
 
   function render() {
     container.innerHTML = `
@@ -23,12 +24,38 @@ export function renderLogin(container) {
           ${mode === 'login' ? renderLoginForm()
             : mode === 'register' ? renderRegisterForm()
             : mode === 'forgot' ? renderForgotForm()
-            : renderResetForm()}
+            : mode === 'reset' ? renderResetForm()
+            : renderVerifyForm()}
         </div>
       </div>
     `;
 
     bindEvents();
+  }
+
+  function renderVerifyForm() {
+    return `
+      <form class="login-form" id="verify-form">
+        <div style="text-align:center;margin-bottom:8px">
+          <div style="font-size:2.5rem;margin-bottom:8px">📧</div>
+          <h3 style="color:var(--text-primary);margin:0">Verify your Email</h3>
+          <p style="color:var(--text-secondary);font-size:0.9rem;margin-top:4px">
+            Enter the 6-digit code sent to <strong style="color:var(--accent-light)">${authEmail}</strong>
+          </p>
+        </div>
+        <div>
+          <label class="input-label">Verification Code <span class="required">*</span></label>
+          <input type="text" class="input-field" id="verify-code" placeholder="Enter 6-digit code" required maxlength="6" pattern="[0-9]{6}"
+            style="text-align:center;font-size:1.5rem;letter-spacing:8px;font-weight:700" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg" ${loading ? 'disabled' : ''}>
+          ${loading ? '<div class="spinner"></div>' : '✅ Verify & Log In'}
+        </button>
+      </form>
+      <div class="login-toggle" style="margin-top:16px">
+        <a id="resend-verify-code" style="cursor:pointer">Resend code</a> · <a id="back-to-login">Back to Sign In</a>
+      </div>
+    `;
   }
 
   function renderLoginForm() {
@@ -146,24 +173,68 @@ export function renderLogin(container) {
       e.preventDefault();
       const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value;
+      const name = document.getElementById('auth-name')?.value?.trim() || 'User';
 
       loading = true;
       render();
 
       try {
         if (mode === 'register') {
-          const name = document.getElementById('auth-name')?.value?.trim() || 'User';
           await register(email, password, name);
-          toastSuccess('Account created successfully!');
+          authEmail = email;
+          mode = 'verify';
+          loading = false;
+          render();
+          toastSuccess('Verification code sent to your email!');
         } else {
           await login(email, password);
           toastSuccess('Welcome back!');
+          navigate('/');
         }
-        navigate('/');
+      } catch (err) {
+        if (err.message.includes('verify your email')) {
+          authEmail = email;
+          mode = 'verify';
+          loading = false;
+          render();
+          return;
+        }
+        loading = false;
+        render();
+        document.getElementById('login-error').innerHTML = `<div class="login-error">${err.message}</div>`;
+      }
+    });
+
+    // Verify form
+    document.getElementById('verify-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = document.getElementById('verify-code').value.trim();
+
+      loading = true;
+      render();
+
+      try {
+        const user = await api.verifyEmail(authEmail, code);
+        // After successful verification, manually set user in auth and redirect
+        // Since api.verifyEmail returns the user and token, we should handle it like a login
+        localStorage.setItem('yn_token', user.token);
+        // The auth state is usually handled by the login/register functions in auth.js
+        // I should probably add a dedicated 'verify' function to auth.js to be consistent
+        window.location.reload(); // Quick way to re-init auth state and redirect
       } catch (err) {
         loading = false;
         render();
         document.getElementById('login-error').innerHTML = `<div class="login-error">${err.message}</div>`;
+      }
+    });
+
+    // Resend verification
+    document.getElementById('resend-verify-code')?.addEventListener('click', async () => {
+      try {
+        await api.resendVerification(authEmail);
+        toastSuccess('New verification code sent!');
+      } catch (err) {
+        toastError(err.message);
       }
     });
 

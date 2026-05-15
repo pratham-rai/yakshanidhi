@@ -60,7 +60,11 @@ async function seedData() {
       displayName: 'Master Admin',
       role: 'masterAdmin',
     });
-    console.log('👑 Created master admin: master@yakshanidhi.com / admin123');
+    await User.updateMany({ isVerified: { $exists: false } }, { isVerified: true });
+    console.log('✅ Created master admin: master@yakshanidhi.com / admin123');
+  } else {
+    // Also verify any existing users who don't have the field yet
+    await User.updateMany({ isVerified: { $exists: false } }, { isVerified: true });
   }
 
   // Seed events if empty

@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
   reminders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
   sentReminders12h: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
   sentReminders1h: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
+  isVerified: { type: Boolean, default: false },
+  verificationCode: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

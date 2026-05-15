@@ -43,10 +43,38 @@ router.post('/register', async (req, res) => {
     if (existing) return res.status(400).json({ error: 'Email already registered' });
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await User.create({ email: email.toLowerCase(), password: hashed, displayName });
-    const token = generateToken(user);
+    const verificationCode = generateResetCode();
 
-    res.status(201).json(userResponse(user, token));
+    const user = await User.create({ 
+      email: email.toLowerCase(), 
+      password: hashed, 
+      displayName,
+      verificationCode
+    });
+
+    // Send verification email
+    await sendMail({
+      to: user.email,
+      subject: '🎭 Welcome to YakshaNidhi — Verify your email',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1a1a2e;color:#eee;border-radius:12px">
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:48px">🎭</div>
+            <h2 style="color:#F4A623;margin:8px 0">YakshaNidhi</h2>
+          </div>
+          <p>Hi <strong>${user.displayName}</strong>,</p>
+          <p>Welcome to YakshaNidhi! Please use the code below to verify your email address:</p>
+          <div style="text-align:center;margin:24px 0">
+            <div style="display:inline-block;background:#E8751A;color:#fff;font-size:32px;font-weight:bold;letter-spacing:8px;padding:16px 32px;border-radius:8px">${verificationCode}</div>
+          </div>
+          <p style="color:#999;font-size:14px">Once verified, you can start saving events and setting reminders.</p>
+          <hr style="border:1px solid #333;margin:24px 0">
+          <p style="color:#666;font-size:12px;text-align:center">YakshaNidhi — The Digital Treasure of Yakshagana Events</p>
+        </div>
+      `,
+    });
+
+    res.status(201).json({ message: 'Verification code sent to your email.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -65,6 +93,10 @@ router.post('/login', async (req, res) => {
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(400).json({ error: 'Invalid email or password' });
+
+    if (!user.isVerified) {
+      return res.status(403).json({ error: 'Please verify your email to log in.', needsVerification: true });
+    }
 
     const token = generateToken(user);
     res.json(userResponse(user, token));
@@ -154,6 +186,64 @@ router.post('/reset-password', async (req, res) => {
 
     console.log(`✅ Password reset for ${user.email}`);
     res.json({ message: 'Password reset successfully! You can now log in.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/verify
+router.post('/verify', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.verificationCode !== code) return res.status(400).json({ error: 'Invalid verification code' });
+
+    user.isVerified = true;
+    user.verificationCode = null;
+    await user.save();
+
+    const token = generateToken(user);
+    res.json(userResponse(user, token));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/resend-verification
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.isVerified) return res.status(400).json({ error: 'Account already verified' });
+
+    const code = generateResetCode();
+    user.verificationCode = code;
+    await user.save();
+
+    await sendMail({
+      to: user.email,
+      subject: '🎭 YakshaNidhi — Your New Verification Code',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1a1a2e;color:#eee;border-radius:12px">
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:48px">🎭</div>
+            <h2 style="color:#F4A623;margin:8px 0">YakshaNidhi</h2>
+          </div>
+          <p>Use the code below to verify your email address:</p>
+          <div style="text-align:center;margin:24px 0">
+            <div style="display:inline-block;background:#E8751A;color:#fff;font-size:32px;font-weight:bold;letter-spacing:8px;padding:16px 32px;border-radius:8px">${code}</div>
+          </div>
+          <hr style="border:1px solid #333;margin:24px 0">
+          <p style="color:#666;font-size:12px;text-align:center">YakshaNidhi — The Digital Treasure of Yakshagana Events</p>
+        </div>
+      `,
+    });
+
+    res.json({ message: 'Verification code resent.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
