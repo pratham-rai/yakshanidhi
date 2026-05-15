@@ -1,5 +1,7 @@
 // API client — calls the Express backend
-const API_BASE = 'https://yakshanidhi.onrender.com/api';
+const API_BASE = window.location.hostname === 'localhost'
+  ? 'http://localhost:5000/api'
+  : 'https://yakshanidhi.onrender.com/api';
 
 function getToken() {
   return localStorage.getItem('yn_token');
