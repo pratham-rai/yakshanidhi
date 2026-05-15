@@ -66,3 +66,11 @@ export async function getAllUsers() {
 export async function toggleAdminRole(uid) {
   return api.toggleRole(uid);
 }
+
+export async function toggleReminder(eventId) {
+  const { reminders } = await api.toggleReminder(eventId);
+  const user = getState('user');
+  if (user) {
+    setState('user', { ...user, reminders });
+  }
+}

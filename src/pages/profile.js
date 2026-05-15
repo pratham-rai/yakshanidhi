@@ -3,11 +3,33 @@ import { api } from '../api.js';
 import { navigate } from '../router.js';
 import { toastSuccess, toastError } from '../toast.js';
 import { ROLES } from '../utils/constants.js';
+import { getApprovedEvents } from '../data.js';
+import { formatDate, formatTime } from '../utils/date.js';
 
 export function renderProfile(container) {
   const user = getCurrentUser();
   let loading = false;
   let success = false;
+  let remindersData = [];
+  let loadingReminders = true;
+
+  async function loadReminders() {
+    if (!user.reminders || user.reminders.length === 0) {
+      loadingReminders = false;
+      render();
+      return;
+    }
+    try {
+      const allEvents = await getApprovedEvents();
+      remindersData = allEvents.filter(e => user.reminders.includes(e.id));
+    } catch (err) {
+      console.error('Failed to load reminders:', err);
+    }
+    loadingReminders = false;
+    render();
+  }
+
+  loadReminders();
 
   function render() {
     const roleBadge = user.role === ROLES.MASTER_ADMIN
@@ -48,6 +70,34 @@ export function renderProfile(container) {
           </div>
         </div>
         ` : ''}
+
+        ` : ''}
+
+        <!-- My Reminders -->
+        <div class="card-strong" style="padding:32px;max-width:600px;margin-bottom:24px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <span style="font-size:1.5rem">🔔</span>
+            <h3 style="margin:0">My Reminders</h3>
+          </div>
+          
+          ${loadingReminders ? `
+            <div class="skeleton" style="height:60px;border-radius:var(--radius-md)"></div>
+          ` : remindersData.length === 0 ? `
+            <p style="color:var(--text-muted);font-size:0.9rem">You haven't set any reminders yet. Click the 🔔 icon on any event to save it here.</p>
+          ` : `
+            <div style="display:flex;flex-direction:column;gap:12px">
+              ${remindersData.map(event => `
+                <a href="#/event/${event.id}" class="card" style="padding:16px;display:flex;justify-content:space-between;align-items:center;text-decoration:none">
+                  <div>
+                    <div style="font-weight:600;color:var(--text-primary)">${event.prasanga}</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted)">${formatDate(event.date)} · ${formatTime(event.time)}</div>
+                  </div>
+                  <span style="color:var(--accent-light)">→</span>
+                </a>
+              `).join('')}
+            </div>
+          `}
+        </div>
 
         <!-- Change Password -->
         <div class="card-strong" style="padding:32px;max-width:600px">

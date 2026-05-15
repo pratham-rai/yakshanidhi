@@ -1,6 +1,8 @@
 import { getEventById } from '../data.js';
 import { formatDate, formatTime } from '../utils/date.js';
 import { thittuBadgeClass } from '../utils/constants.js';
+import { isLoggedIn, getCurrentUser, toggleReminder } from '../auth.js';
+import { toastSuccess, toastError } from '../toast.js';
 
 export async function renderEventDetail(container, params) {
   // Loading state
@@ -58,6 +60,19 @@ export async function renderEventDetail(container, params) {
           </div>
         </div>
 
+        <div style="padding:0 32px 24px; display:flex; gap:12px; flex-wrap:wrap">
+          <a href="${generateCalendarUrl(event)}" target="_blank" rel="noopener" class="btn btn-secondary">
+            📅 Add to Calendar
+          </a>
+          ${isLoggedIn() ? `
+            <button id="remind-btn" class="btn ${isReminded(event.id) ? 'btn-danger' : 'btn-primary'}">
+              ${isReminded(event.id) ? '🔕 Remove Reminder' : '🔔 Remind Me'}
+            </button>
+          ` : `
+            <a href="#/login" class="btn btn-ghost" style="font-size:0.9rem">Login to set reminders</a>
+          `}
+        </div>
+
         ${event.description ? `
           <div style="padding:0 32px 32px">
             <div class="card" style="padding:20px">
@@ -77,6 +92,44 @@ export async function renderEventDetail(container, params) {
   `;
 
   document.getElementById('back-btn').addEventListener('click', () => window.history.back());
+
+  const remindBtn = document.getElementById('remind-btn');
+  if (remindBtn) {
+    remindBtn.addEventListener('click', async () => {
+      try {
+        await toggleReminder(event.id);
+        renderEventDetail(container, params); // Re-render to update button state
+        toastSuccess(isReminded(event.id) ? 'Reminder removed' : 'Reminder set!');
+      } catch (err) {
+        toastError('Failed to update reminder: ' + err.message);
+      }
+    });
+  }
+}
+
+function isReminded(eventId) {
+  const user = getCurrentUser();
+  return user && user.reminders && user.reminders.includes(eventId);
+}
+
+function generateCalendarUrl(event) {
+  const title = encodeURIComponent(`YakshaNidhi: ${event.prasanga}`);
+  const details = encodeURIComponent(`${event.troupe || ''}\n\n${event.description || ''}\n\nView event: ${window.location.origin}/#/event/${event.id}`);
+  const location = encodeURIComponent(event.location);
+  
+  // Format: YYYYMMDDTHHmmSSZ
+  const datePart = event.date.replace(/-/g, '');
+  const timePart = event.time.replace(/:/g, '');
+  const start = `${datePart}T${timePart}00`;
+  
+  // End time (+4 hours)
+  const [h, m] = event.time.split(':').map(Number);
+  const endH = String((h + 4) % 24).padStart(2, '0');
+  const endDatePart = endH < h ? String(Number(datePart) + 1) : datePart; // Naive next day
+  const end = `${endDatePart}T${endH}${String(m).padStart(2, '0')}00`;
+
+  return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${start}/${end}`;
+}
 
   if (hasCoords) {
     setTimeout(() => {

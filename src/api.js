@@ -43,6 +43,7 @@ export const api = {
   changePassword: (currentPassword, newPassword) => request('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
   getUsers: () => request('/auth/users'),
   toggleRole: (uid) => request(`/auth/users/${uid}/role`, { method: 'PATCH' }),
+  toggleReminder: (eventId) => request(`/auth/reminders/${eventId}`, { method: 'POST' }),
 
   // Events
   getApprovedEvents: () => request('/events'),

@@ -30,6 +30,7 @@ function userResponse(user, token) {
       email: user.email,
       displayName: user.displayName,
       role: user.role,
+      reminders: user.reminders || [],
     },
   };
 }
@@ -182,7 +183,28 @@ router.get('/me', auth, (req, res) => {
     email: req.user.email,
     displayName: req.user.displayName,
     role: req.user.role,
+    reminders: req.user.reminders || [],
   });
+});
+
+// POST /api/auth/reminders/:eventId — toggle event reminder
+router.post('/reminders/:eventId', auth, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const user = await User.findById(req.user._id);
+    
+    const index = user.reminders.indexOf(eventId);
+    if (index > -1) {
+      user.reminders.splice(index, 1);
+    } else {
+      user.reminders.push(eventId);
+    }
+    
+    await user.save();
+    res.json({ reminders: user.reminders });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /api/auth/users — list all users (master admin only)

@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'admin', 'masterAdmin'], default: 'user' },
   resetCode: { type: String, default: null },
   resetCodeExpiry: { type: Date, default: null },
+  reminders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
