@@ -4,7 +4,9 @@ const jwt = require('jsonwebtoken');
 const { sendMail } = require('../services/emailService');
 const User = require('../models/User');
 const { auth, adminOnly, masterAdminOnly } = require('../middleware/auth');
+const { OAuth2Client } = require('google-auth-library');
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const router = express.Router();
 
 function generateToken(user) {
@@ -188,6 +190,40 @@ router.post('/reset-password', async (req, res) => {
     res.json({ message: 'Password reset successfully! You can now log in.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/google
+router.post('/google', async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, sub: googleId } = payload;
+
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      // Create new user if doesn't exist
+      user = await User.create({
+        email: email.toLowerCase(),
+        displayName: name,
+        isVerified: true, // Google users are verified
+        password: await bcrypt.hash(Math.random().toString(36), 10), // Random password
+      });
+    } else if (!user.isVerified) {
+      user.isVerified = true;
+      await user.save();
+    }
+
+    const token = generateToken(user);
+    res.json(userResponse(user, token));
+  } catch (err) {
+    console.error('Google Auth Error:', err);
+    res.status(400).json({ error: 'Google authentication failed' });
   }
 });
 

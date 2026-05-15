@@ -75,6 +75,7 @@ export function renderLogin(container) {
         <button type="submit" class="btn btn-primary btn-lg" ${loading ? 'disabled' : ''}>
           ${loading ? '<div class="spinner"></div>' : 'Sign In'}
         </button>
+        <div id="google-btn-login" style="margin-top:12px;display:flex;justify-content:center"></div>
       </form>
       <div class="login-divider">or</div>
       <button class="btn btn-secondary" style="width:100%" id="guest-btn">👁️ Continue as Guest</button>
@@ -102,6 +103,7 @@ export function renderLogin(container) {
         <button type="submit" class="btn btn-primary btn-lg" ${loading ? 'disabled' : ''}>
           ${loading ? '<div class="spinner"></div>' : 'Create Account'}
         </button>
+        <div id="google-btn-login" style="margin-top:12px;display:flex;justify-content:center"></div>
       </form>
       <div class="login-divider">or</div>
       <button class="btn btn-secondary" style="width:100%" id="guest-btn">👁️ Continue as Guest</button>
@@ -322,6 +324,46 @@ export function renderLogin(container) {
       mode = 'login';
       render();
     });
+
+    initGoogleLogin();
+  }
+
+  function initGoogleLogin() {
+    if (typeof google === 'undefined') {
+      setTimeout(initGoogleLogin, 100);
+      return;
+    }
+    
+    google.accounts.id.initialize({
+      client_id: "990036941261-8bhe4h6bjad9vlodi32jae8m78gpl1ca.apps.googleusercontent.com",
+      callback: handleGoogleResponse
+    });
+    
+    const loginBtn = document.getElementById('google-btn-login');
+    if (loginBtn) {
+      google.accounts.id.renderButton(loginBtn, { 
+        theme: "outline", 
+        size: "large", 
+        width: 320, 
+        text: "continue_with",
+        shape: "rectangular"
+      });
+    }
+  }
+
+  async function handleGoogleResponse(response) {
+    loading = true;
+    render();
+    try {
+      const user = await api.loginWithGoogle(response.credential);
+      localStorage.setItem('yn_token', user.token);
+      toastSuccess('Signed in with Google!');
+      window.location.reload();
+    } catch (err) {
+      loading = false;
+      render();
+      document.getElementById('login-error').innerHTML = `<div class="login-error">${err.message}</div>`;
+    }
   }
 
   render();
