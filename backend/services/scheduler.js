@@ -67,7 +67,7 @@ async function sendReminderEmail(user, event, timeLabel) {
           <p style="margin:8px 0"><strong>🕒 Time:</strong> ${event.time}</p>
           <p style="margin:8px 0"><strong>📍 Location:</strong> ${event.location}</p>
         </div>
-        <p style="text-align:center"><a href="${window.location.origin}/#/event/${event._id}" style="color:#E8751A;font-weight:bold;text-decoration:none">View Event Details →</a></p>
+        <p style="text-align:center"><a href="https://yakshanidhi-8bca2.web.app/#/event/${event._id}" style="color:#E8751A;font-weight:bold;text-decoration:none">View Event Details →</a></p>
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
         <p style="font-size:12px;color:#888;text-align:center">You received this because you set a reminder on YakshaNidhi.</p>
       </div>
