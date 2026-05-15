@@ -34,7 +34,7 @@ const path = require('path');
 app.use(express.static(path.join(__dirname, '../dist')));
 
 // SPA Fallback: Serve index.html for any non-API routes
-app.get('*', (req, res) => {
+app.get('(.*)', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API route not found' });
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
