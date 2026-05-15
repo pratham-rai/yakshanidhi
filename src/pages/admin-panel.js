@@ -1,4 +1,4 @@
-import { getEventsByStatus, approveEvent, rejectEvent, updateEvent, getEvents, revertToPending } from '../data.js';
+import { getEventsByStatus, approveEvent, rejectEvent, updateEvent, getEvents, revertToPending, resolveMapLink } from '../data.js';
 import { toastSuccess, toastError } from '../toast.js';
 import { formatShortDate } from '../utils/date.js';
 import { statusBadgeClass, thittuBadgeClass, EVENT_STATUS, THITTU_TYPES } from '../utils/constants.js';
@@ -151,6 +151,9 @@ export function renderAdminPanel(container) {
           date: document.getElementById('edit-date').value,
           time: document.getElementById('edit-time').value,
           location: document.getElementById('edit-location').value,
+          googleMapsLink: document.getElementById('edit-maps-link').value,
+          latitude: parseFloat(document.getElementById('edit-lat').value) || null,
+          longitude: parseFloat(document.getElementById('edit-lng').value) || null,
           description: document.getElementById('edit-description').value,
           posterUrls: editingEvent.posterUrls || []
         };
@@ -159,6 +162,33 @@ export function renderAdminPanel(container) {
         try { await updateEvent(editingEvent.id, updated, filesArray); toastSuccess('Event updated!'); editingEvent = null; loadEvents(); }
         catch (e) { toastError('Failed: ' + e.message); }
       });
+
+      const editMapLinkInput = document.getElementById('edit-maps-link');
+      if (editMapLinkInput) {
+        editMapLinkInput.addEventListener('input', async (e) => {
+          const url = e.target.value.trim();
+          if (!url || !url.startsWith('http')) return;
+          
+          const latInput = document.getElementById('edit-lat');
+          const lngInput = document.getElementById('edit-lng');
+          
+          if (latInput.value || lngInput.value) return;
+
+          try {
+            editMapLinkInput.style.opacity = '0.5';
+            const coords = await resolveMapLink(url);
+            if (coords.lat && coords.lng) {
+              latInput.value = coords.lat;
+              lngInput.value = coords.lng;
+              toastSuccess('Coordinates auto-filled from Google Maps link!');
+            }
+          } catch (err) {
+            console.warn('Could not auto-resolve coordinates:', err);
+          } finally {
+            editMapLinkInput.style.opacity = '1';
+          }
+        });
+      }
     }
   }
 
@@ -181,6 +211,11 @@ export function renderAdminPanel(container) {
               <div><label class="input-label">Time</label><input type="time" class="input-field" id="edit-time" value="${event.time}" required /></div>
             </div>
             <div><label class="input-label">Location</label><input class="input-field" id="edit-location" value="${event.location}" required /></div>
+            <div><label class="input-label">Google Maps Link</label><input type="url" class="input-field" id="edit-maps-link" value="${event.googleMapsLink || ''}" /></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div><label class="input-label">Latitude</label><input type="number" step="any" class="input-field" id="edit-lat" value="${event.latitude || ''}" /></div>
+              <div><label class="input-label">Longitude</label><input type="number" step="any" class="input-field" id="edit-lng" value="${event.longitude || ''}" /></div>
+            </div>
             <div><label class="input-label">Description</label><textarea class="input-field" id="edit-description" rows="3">${event.description || ''}</textarea></div>
             <div>
               <label class="input-label">Existing Posters</label>
