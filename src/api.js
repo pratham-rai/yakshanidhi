@@ -13,14 +13,20 @@ function authHeaders() {
 }
 
 async function request(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const { headers: optHeaders, ...restOptions } = options;
+  const fetchOptions = {
+    ...restOptions,
     headers: {
       'Content-Type': 'application/json',
       ...authHeaders(),
-      ...options.headers,
+      ...optHeaders,
     },
-    ...options,
-  });
+  };
+  // Ensure POST/PATCH requests always have a body
+  if ((fetchOptions.method === 'POST' || fetchOptions.method === 'PATCH') && !fetchOptions.body) {
+    fetchOptions.body = JSON.stringify({});
+  }
+  const res = await fetch(`${API_BASE}${path}`, fetchOptions);
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
@@ -44,7 +50,7 @@ export const api = {
   getAllEvents: (status) => request(`/events/all${status ? `?status=${status}` : ''}`),
   createEvent: (data) => request('/events', { method: 'POST', body: JSON.stringify(data) }),
   updateEvent: (id, data) => request(`/events/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  approveEvent: (id) => request(`/events/${id}/approve`, { method: 'POST' }),
+  approveEvent: (id) => request(`/events/${id}/approve`, { method: 'POST', body: JSON.stringify({}) }),
   rejectEvent: (id, reason) => request(`/events/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
   revertToPending: (id) => request(`/events/${id}/pending`, { method: 'POST' }),
 

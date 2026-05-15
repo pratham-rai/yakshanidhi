@@ -78,8 +78,8 @@ export function renderAdminPanel(container) {
                     <button class="btn btn-sm btn-primary approve-btn" data-id="${event.id}">✅ Approve</button>
                     <button class="btn btn-sm btn-danger reject-btn" data-id="${event.id}">❌ Reject</button>
                   ` : ''}
-                  ${event.status === EVENT_STATUS.APPROVED ? `
-                    <button class="btn btn-sm btn-danger revert-btn" data-id="${event.id}">🗑️ Revert to Pending</button>
+                  ${event.status === EVENT_STATUS.APPROVED || event.status === EVENT_STATUS.REJECTED ? `
+                    <button class="btn btn-sm btn-danger revert-btn" data-id="${event.id}">🔄 Revert to Pending</button>
                   ` : ''}
                   <button class="btn btn-sm btn-secondary edit-btn" data-id="${event.id}">✏️ Edit</button>
                 </div>
