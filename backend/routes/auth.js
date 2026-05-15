@@ -1,22 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const { sendMail } = require('../services/emailService');
 const User = require('../models/User');
 const { auth, adminOnly, masterAdminOnly } = require('../middleware/auth');
 
 const router = express.Router();
-
-// Email transporter (configured via env)
-let transporter = null;
-if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-  transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: false,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
-}
 
 function generateToken(user) {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -107,34 +96,28 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     // Send email
-    if (transporter) {
-      await transporter.sendMail({
-        from: `"YakshaNidhi" <${process.env.SMTP_USER}>`,
-        to: user.email,
-        subject: '🎭 YakshaNidhi — Password Reset Code',
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1a1a2e;color:#eee;border-radius:12px">
-            <div style="text-align:center;margin-bottom:24px">
-              <div style="font-size:48px">🎭</div>
-              <h2 style="color:#F4A623;margin:8px 0">YakshaNidhi</h2>
-            </div>
-            <p>Hi <strong>${user.displayName}</strong>,</p>
-            <p>You requested a password reset. Use this code:</p>
-            <div style="text-align:center;margin:24px 0">
-              <div style="display:inline-block;background:#E8751A;color:#fff;font-size:32px;font-weight:bold;letter-spacing:8px;padding:16px 32px;border-radius:8px">${code}</div>
-            </div>
-            <p style="color:#999;font-size:14px">This code expires in <strong>15 minutes</strong>.</p>
-            <p style="color:#999;font-size:14px">If you didn't request this, ignore this email.</p>
-            <hr style="border:1px solid #333;margin:24px 0">
-            <p style="color:#666;font-size:12px;text-align:center">YakshaNidhi — The Digital Treasure of Yakshagana Events</p>
+    await sendMail({
+      to: user.email,
+      subject: '🎭 YakshaNidhi — Password Reset Code',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1a1a2e;color:#eee;border-radius:12px">
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:48px">🎭</div>
+            <h2 style="color:#F4A623;margin:8px 0">YakshaNidhi</h2>
           </div>
-        `,
-      });
-      console.log(`📧 Reset code sent to ${user.email}`);
-    } else {
-      // If no email configured, log to console (dev mode)
-      console.log(`🔑 Reset code for ${user.email}: ${code} (no SMTP configured — showing in console)`);
-    }
+          <p>Hi <strong>${user.displayName}</strong>,</p>
+          <p>You requested a password reset. Use this code:</p>
+          <div style="text-align:center;margin:24px 0">
+            <div style="display:inline-block;background:#E8751A;color:#fff;font-size:32px;font-weight:bold;letter-spacing:8px;padding:16px 32px;border-radius:8px">${code}</div>
+          </div>
+          <p style="color:#999;font-size:14px">This code expires in <strong>15 minutes</strong>.</p>
+          <p style="color:#999;font-size:14px">If you didn't request this, ignore this email.</p>
+          <hr style="border:1px solid #333;margin:24px 0">
+          <p style="color:#666;font-size:12px;text-align:center">YakshaNidhi — The Digital Treasure of Yakshagana Events</p>
+        </div>
+      `,
+    });
+    console.log(`🔑 Reset code logic executed for ${user.email}`);
 
     res.json({ message: 'If this email is registered, a reset code has been sent.' });
   } catch (err) {

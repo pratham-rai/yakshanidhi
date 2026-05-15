@@ -71,7 +71,6 @@ export function renderProfile(container) {
         </div>
         ` : ''}
 
-        ` : ''}
 
         <!-- My Reminders -->
         <div class="card-strong" style="padding:32px;max-width:600px;margin-bottom:24px">

@@ -10,6 +10,7 @@ const uploadRoutes = require('./routes/upload');
 const { auth } = require('./middleware/auth');
 const User = require('./models/User');
 const Event = require('./models/Event');
+const { startScheduler } = require('./services/scheduler');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,6 +40,7 @@ async function start() {
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
+      startScheduler();
     });
   } catch (err) {
     console.error('❌ Failed to connect to MongoDB:', err.message);

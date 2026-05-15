@@ -105,6 +105,19 @@ export async function renderEventDetail(container, params) {
       }
     });
   }
+  if (hasCoords) {
+    setTimeout(() => {
+      import('leaflet').then(leaflet => {
+        const L = leaflet.default || leaflet;
+        const mapEl = document.getElementById('detail-map');
+        if (!mapEl) return;
+        const map = L.map(mapEl).setView([event.latitude, event.longitude], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+        L.marker([event.latitude, event.longitude]).addTo(map).bindPopup(`<strong>${event.prasanga}</strong><br>${event.location}`).openPopup();
+        setTimeout(() => map.invalidateSize(), 200);
+      }).catch(() => {});
+    }, 100);
+  }
 }
 
 function isReminded(eventId) {
@@ -129,19 +142,4 @@ function generateCalendarUrl(event) {
   const end = `${endDatePart}T${endH}${String(m).padStart(2, '0')}00`;
 
   return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${start}/${end}`;
-}
-
-  if (hasCoords) {
-    setTimeout(() => {
-      import('leaflet').then(leaflet => {
-        const L = leaflet.default || leaflet;
-        const mapEl = document.getElementById('detail-map');
-        if (!mapEl) return;
-        const map = L.map(mapEl).setView([event.latitude, event.longitude], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-        L.marker([event.latitude, event.longitude]).addTo(map).bindPopup(`<strong>${event.prasanga}</strong><br>${event.location}`).openPopup();
-        setTimeout(() => map.invalidateSize(), 200);
-      }).catch(() => {});
-    }, 100);
-  }
 }
