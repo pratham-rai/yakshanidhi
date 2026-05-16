@@ -37,8 +37,20 @@ export function renderMerchandise(container) {
           </div>
         </div>
 
-        <div style="margin-top: 40px;">
-          <a href="#/" class="btn btn-primary" style="padding: 12px 32px;">Return Home</a>
+        <div style="margin-top: 40px; background: var(--bg-card); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border);">
+          <p style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 16px; font-weight: 500;">
+            Get notified when the store goes live:
+          </p>
+          <form id="notify-form" style="display: flex; gap: 8px; max-width: 400px; margin: 0 auto;">
+            <input type="email" id="notify-email" class="input-field" placeholder="your@email.com" required style="padding: 10px 16px; font-size: 0.9rem;" />
+            <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-size: 0.9rem; white-space: nowrap;">
+              Notify Me
+            </button>
+          </form>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <a href="#/" class="btn btn-secondary" style="padding: 10px 24px; font-size: 0.85rem;">Return Home</a>
         </div>
       </div>
     </div>
@@ -62,4 +74,20 @@ export function renderMerchandise(container) {
       }
     </style>
   `;
+
+  // Add event listener for notify form
+  setTimeout(() => {
+    const form = document.getElementById('notify-form');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('notify-email').value;
+        console.log('Notification request for:', email);
+        import('../toast.js').then(({ toastSuccess }) => {
+          toastSuccess(`Thank you! We'll notify ${email} when the store opens.`);
+        });
+        form.reset();
+      });
+    }
+  }, 0);
 }
